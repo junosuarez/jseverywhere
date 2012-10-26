@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+
+    <title>Higher Order Flow Control</title>
+
+    <meta name="author" content="jden <jason@denizac.org>">
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+    <!-- For syntax highlighting -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <!-- If the query includes 'print-pdf', use the PDF print sheet -->
+    <script>
+      document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+    </script>
+
+    <!--[if lt IE 9]>
+    <script src="lib/js/html5shiv.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="reveal">
+
+      <div class="slides">
+
+<section>
+  <h2>Higher Order <nobr>Flow Control</nobr></h2>
+  <p><a href="https://twitter.com/lejden">@leJDen</a></p>
+  <img src=js.png height=100>
+  <p>Jason Denizac</p>
+</section>
+
+<section>
+  <img src="apple-line.jpg">
+  <aside class=notes>
+    Our apps spend a lot of time waiting.
+    If we're smart, we'll make good use of time while we're waiting. Especially true in a server (web scale!), but also useful client side.
+  </aside>
+</section>
+
+<section>
+  <img src="buzzer.jpg">
+  <aside class=notes>
+    This is a much better experience - you can go enjoy a beverage and do whatever else until your table is ready.
+  </aside>
+</section>
+
+<section>
+  <img src="iou.jpg">
+  <aside class=notes>
+    Promises are like IOUs: they represent a value which will be available eventually, at some time in the future.
+  </aside>
+</section>
+
+<section>
+  <img src="gossip.jpg">
+  <aside class=notes>
+    Promises are composable - you can string together a long line of them to create chains of application flow which will happen eventually - as soon as they're ready.
+  </aside>
+</section>
+
+<section>
+  <h2>Promises aren't about making your code look pretty</h2>
+  <p>(although they can help)</p>
+</section>
+
+<section>
+  <section>
+    <h2>Synchronous</h2>
+    <pre>
+    <code class=javascript>
+function (stuff) {
+  if (!stuff) throw new Error(false);
+  return true;
+}
+    </code>
+  </pre>
+  </section>
+  <section>
+    <h2>Asynchronous</h2>
+    <pre><code class=javascript>
+function (stuff) {
+  return promise(function () {
+    if (!stuff) this.reject(new Error(false));
+    this.resolve(true);
+  })
+}
+    </code></pre>
+  </section>
+  <section>
+    <h3>return ⇔ resolve</h3>
+    <h3>throw ⇔ reject</h3>
+  </section>
+</section>
+
+<section>
+  <h2>Promise States</h2>
+  <img src=promises.jpg>
+</section>
+
+<section>
+  <h2>Composable</h2>
+  <p><em>f ◦ g (x)</em> - arithmetic</p>
+  <p class=fragment>f(g(x)) - synchronous code</p>
+  <p class=fragment>g(x).then(f) - promises</p>
+</section>
+
+<section>
+  <h2>Errors Bubble Up</h2>
+  <section>
+
+    <pre><code class=javascript>
+users.getUsers({id: 2}, function (err, data) {
+  if (err) {
+    // ?
+  }
+  console.log(data);
+})
+    </code></pre>
+  </section>
+
+  <section>
+    <pre><code class=javascript>
+try{
+  users.getUsers({id: 2}, function (err, data) {
+    if (err) {
+      var newErr = new Error('Unable to load user 2');
+      newErr.innerError = err;
+      throw newErr;
+    }
+    console.log(data);
+  })
+} catch (err) {
+  console.log('Oh no, there was an error:', err);
+}
+    </code></pre>
+
+  </section>
+  <section>
+    <pre><code class=javascript>
+  users.getUsers({id: 2}).then(
+  function (data) {
+    console.log(data);
+  },
+  function (err) {
+    console.log('Oh no, there was an error:', err);
+  })
+    </code></pre>
+  </section>
+  <section>
+    <pre><code class=javascript>
+  users.getUsers({id: 2}).then(
+  function (data) {
+    console.log(data);
+  })
+  .then(manipulateSomeData)
+  .then(saveSomeData)
+  .then(null, function (err) {
+    console.log('Oh no, there was an error:', err);
+  })
+    </code></pre>
+  </section>
+</section>
+
+<section>
+  <h2>Now, why should we care?</h2>
+  <iframe width="640" height="360" src="http://www.youtube.com/embed/s0PcpdoF0Xc?feature=player_detailpage" frameborder="0" allowfullscreen></iframe>
+</section>
+
+<section>
+  <h2>write clean code</h2>
+  <p>seperation of concerns: define the interface</p>
+  <p class=fragment><em>I need x, I do y</em></p>
+  <p class=fragment><em>I don't care when</em></p>
+</section>
+
+<section>
+  <h2>control flow is a separate concern</h2>
+</section>
+
+<section>
+  <h2>cross-cutting concerns</h2>
+  <ul>
+    <li>Operational
+      <ul>
+        <li>logging</li>
+        <li>auditing</li>
+        <li>analytics</li>
+      </ul>
+    </li>
+    <li>Data
+      <ul>
+        <li>validation</li>
+        <li>crypto</li>
+        <li>cacheing</li>
+      </ul>
+    </li>
+    <li>Policy
+      <ul>
+        <li>authorization</li>
+        <li>feature flags</li>
+        <li>policy injection</li>
+      </ul>
+    </li>
+</section>
+
+<section>
+  <h2>Resources</h2>
+<ul>
+  <li>Promise libraries
+    <ul>
+      <li><a href=https://github.com/kriskowal/q>Q</a></li>
+      <li><a href=https://github.com/tildeio/rsvp.js>rsvp</a></li>
+      <li><a href=https://github.com/cujojs/when>when</a></li>
+    </ul>
+  </li>
+  <li><a href=http://howtonode.org/promises>Promises in Node.js</a></li>
+  <li><a href=https://github.com/domenic/promise-tests>Promises/A test suite</a></li>
+  <li><a href=http://www.domino-play.com/TopplingBasic.htm>http://www.domino-play.com/TopplingBasic.htm</a></li>
+</ul>
+</section>
+        <section>
+          <h1>make amazing things</h1>
+          <p><a href=github.com/jden/jseverywhere>http://github.com/jden/jseverywhere</a></p>
+          <p>@leJDen</p>
+        </section>
+
+      </div>
+
+    </div>
+
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.min.js"></script>
+
+    <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+
+        theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'lib/js/highlight.js', async: true, callback: function() { window.hljs.initHighlightingOnLoad(); } },
+          { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'lib/js/showdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          { src: 'lib/js/data-markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          { src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+        ]
+      });
+    </script>
+
+  </body>
+</html>

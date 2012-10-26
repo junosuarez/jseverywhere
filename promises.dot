@@ -1,0 +1,4 @@
+digraph Promise{
+  Pending -> Resolved [label=".resolve(val)"];
+  Pending -> Rejected [label=".reject(err)"];
+}
